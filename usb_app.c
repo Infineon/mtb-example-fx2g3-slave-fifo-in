@@ -188,7 +188,7 @@ static cy_en_scb_i2c_status_t Cy_Slff_ConfigFpgaRegister (void)
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
- /* Update default resolution hight size used by Firmware */
+ /* Update default resolution height size used by Firmware */
     status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE0_OFFSET+DEVICE_IMAGE_HEIGHT_MSB_ADDRESS,CY_GET_MSB(height),
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
@@ -265,12 +265,12 @@ static cy_en_scb_i2c_status_t Cy_Slff_ConfigFpgaRegister (void)
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
- /* Update default resolution hight size used by Firmware */
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE1_OFFSET+DEVICE_IMAGE_HEIGHT_MSB_ADDRESS,CY_GET_MSB(hight),
+ /* Update default resolution height size used by Firmware */
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE1_OFFSET+DEVICE_IMAGE_HEIGHT_MSB_ADDRESS,CY_GET_MSB(height),
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
-    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE1_OFFSET+DEVICE_IMAGE_HEIGHT_LSB_ADDRESS,CY_GET_LSB(hight),
+    status = Cy_I2C_Write(FPGASLAVE_ADDR,DEVICE1_OFFSET+DEVICE_IMAGE_HEIGHT_LSB_ADDRESS,CY_GET_LSB(height),
                                               FPGA_I2C_ADDRESS_WIDTH,FPGA_I2C_DATA_WIDTH);
     ASSERT_NON_BLOCK(status == CY_SCB_I2C_SUCCESS, status);
 
@@ -320,6 +320,75 @@ cy_en_scb_i2c_status_t Cy_Slff_DataStreamStartStop(uint8_t device_offset, uint8_
     return status;
 }/*End of Cy_Slff_DataStreamStartStop() */
 #endif
+
+/*****************************************************************************
+* Function Name: Cy_Slff_AppStop(cy_stc_usb_app_ctxt_t *pAppCtxt, 
+                cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, uint32_t epNumber)
+******************************************************************************
+* Summary:
+*  Stop the data stream channels
+*
+*****************************************************************************/
+static void Cy_Slff_AppStop(cy_stc_usb_app_ctxt_t *pAppCtxt, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, uint32_t epNumber)
+{
+    cy_en_hbdma_mgr_status_t status = CY_HBDMA_MGR_SUCCESS;
+    uint8_t index = 0;
+    cy_stc_hbdma_sock_t sckStat;
+
+    DBG_APP_INFO("App Stop:epNumber=0x%x\r\n",epNumber);
+
+    if (BULK_IN_ENDPOINT_1 == epNumber)
+    {
+        for(index = 0; index < pAppCtxt->hbBulkInChannel[0]->prodSckCount; index++)
+        {
+            do {
+                Cy_HBDma_GetSocketStatus(pAppCtxt->pHbDmaMgrCtxt->pDrvContext, pAppCtxt->hbBulkInChannel[0]->prodSckId[index], &sckStat);
+            } while(((_FLD2VAL(LVDSSS_LVDS_ADAPTER_DMA_SCK_STATUS_STATE,sckStat.status)) != 0x1));
+
+            DBG_APP_INFO("DMA Socket %x is stalled\r\n", pAppCtxt->hbBulkInChannel[0]->prodSckId[index]);
+        }
+#if FPGA_ENABLE
+        Cy_Slff_DataStreamStartStop(DEVICE0_OFFSET, STOP);
+#endif /* FPGA_ENABLE */
+        /* Reset the DMA channel through which data is received from the LVDS side. */
+        status = Cy_HBDma_Channel_Reset(pAppCtxt->hbBulkInChannel[0]);
+        ASSERT_NON_BLOCK(CY_HBDMA_MGR_SUCCESS == status,status);
+        pAppCtxt->slffPendingRxBufCnt1 = 0;
+
+        DBG_APP_INFO("EP: %d DMA Reset and App Stoppedr\n",epNumber);
+    }
+    else if (BULK_IN_ENDPOINT_2 == epNumber)
+    {
+        for(index = 0; index < pAppCtxt->hbBulkInChannel[1]->prodSckCount; index++)
+        {
+            do {
+                Cy_HBDma_GetSocketStatus(pAppCtxt->pHbDmaMgrCtxt->pDrvContext, pAppCtxt->hbBulkInChannel[1]->prodSckId[index], &sckStat);
+            } while(((_FLD2VAL(LVDSSS_LVDS_ADAPTER_DMA_SCK_STATUS_STATE,sckStat.status)) != 0x1));
+
+            DBG_APP_INFO("DMA Socket %x is stalled\r\n", pAppCtxt->hbBulkInChannel[1]->prodSckId[index]);
+        }
+
+#if FPGA_ENABLE
+        Cy_Slff_DataStreamStartStop(DEVICE1_OFFSET, STOP);
+#endif /* FPGA_ENABLE */
+
+        /* Reset the DMA channel through which data is received from the LVDS side. */
+        status = Cy_HBDma_Channel_Reset(pAppCtxt->hbBulkInChannel[1]);
+        ASSERT_NON_BLOCK(CY_HBDMA_MGR_SUCCESS == status,status);
+        pAppCtxt->slffPendingRxBufCnt2 = 0;
+
+        DBG_APP_INFO("EP: %d DMA Reset and App Stoppedr\n",epNumber);
+    }
+
+    /* On USB 2.0 connection, reset the DataWire channel used to send data to the EPM. */
+    Cy_USBHS_App_ResetEpDma(&(pAppCtxt->endpInDma[epNumber]));
+
+    /* Flush and reset the endpoint and clear the STALL bit. */
+    Cy_USBD_FlushEndp(pUsbdCtxt, epNumber, CY_USB_ENDP_DIR_IN);
+    Cy_USBD_ResetEndp(pUsbdCtxt, epNumber, CY_USB_ENDP_DIR_IN, false);
+    Cy_USB_USBD_EndpSetClearStall(pUsbdCtxt, (cy_en_usb_endp_dir_t)epNumber, CY_USB_ENDP_DIR_IN, false);
+
+}
 
 /* SlaveFIFO RX Handler*/
 static void Cy_Slff_AppHandleRxEvent (cy_stc_usb_app_ctxt_t  *pUsbApp, cy_stc_hbdma_channel_t *pChHandle, bool incFlag, uint8_t index)
@@ -406,24 +475,18 @@ void Cy_Slff_AppTaskHandler(void *pTaskParam)
 
     vTaskDelay(250);
 
-    /* If VBus is present, enable the USB connection. */
-    pAppCtxt->vbusPresent = (Cy_GPIO_Read(VBUS_DETECT_GPIO_PORT, VBUS_DETECT_GPIO_PIN) == VBUS_DETECT_STATE);
-    if (pAppCtxt->vbusPresent) {
-        Cy_USB_EnableUsbHSConnection(pAppCtxt);
-    }
-
 #if FPGA_ENABLE
 
     Cy_FPGAConfigPins(pAppCtxt,FPGA_CONFIG_MODE);
     Cy_QSPI_Start(pAppCtxt,&HBW_BufMgr);
-    Cy_SPI_FlashInit(SPI_FLASH_0, false);
+    Cy_SPI_FlashInit(SPI_FLASH_0, true,false);
 
+    DBG_APP_INFO("Configure FPGA\n\r");
     Cy_FPGAConfigure(pAppCtxt,FPGA_CONFIG_MODE);
 
     if(!glIsFPGARegConfigured)
     {
         Cy_APP_GetFPGAVersion(pAppCtxt);
-        DBG_APP_INFO("Configure FPGA\n\r"); 
         if(0 == Cy_Slff_ConfigFpgaRegister())
         {
             glIsFPGARegConfigured = true;
@@ -435,10 +498,16 @@ void Cy_Slff_AppTaskHandler(void *pTaskParam)
         }
     }
 #endif
-    vTaskDelay(250);
 
     /* Initialize the LVDS interface. */
     Cy_Slff_LvdsInit(); 
+    vTaskDelay(100);
+
+    /* If VBus is present, enable the USB connection. */
+    pAppCtxt->vbusPresent = (Cy_GPIO_Read(VBUS_DETECT_GPIO_PORT, VBUS_DETECT_GPIO_PIN) == VBUS_DETECT_STATE);
+    if (pAppCtxt->vbusPresent) {
+        Cy_USB_EnableUsbHSConnection(pAppCtxt);
+    }
 
 
     DBG_APP_INFO("AppThreadCreated\r\n");
@@ -538,15 +607,11 @@ void Cy_Slff_AppTaskHandler(void *pTaskParam)
                 DBG_APP_INFO("CY_USB_STREAMING_STOP for EP %x\r\n", (uint8_t)queueMsg.data[0]);
                 if((uint8_t)(queueMsg.data[0]) == BULK_IN_ENDPOINT_1)
                 {
-#if FPGA_ENABLE
-                    Cy_Slff_DataStreamStartStop(DEVICE0_OFFSET, STOP);
-#endif
+                    Cy_Slff_AppStop(pAppCtxt, pAppCtxt->pUsbdCtxt,BULK_IN_ENDPOINT_1);
                 }
                 else if((uint8_t)(queueMsg.data[0]) == BULK_IN_ENDPOINT_2)
                 {
-#if FPGA_ENABLE
-                    Cy_Slff_DataStreamStartStop(DEVICE1_OFFSET, STOP);
-#endif
+                    Cy_Slff_AppStop(pAppCtxt, pAppCtxt->pUsbdCtxt,BULK_IN_ENDPOINT_2);
                 }
             break;
             default:
@@ -813,6 +878,7 @@ void Cy_USB_AppConfigureEndp(cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, uint8_t *pEndpDs
     uint32_t isoPkts = 0x00;
     uint8_t burstSize = 0x00;
     uint8_t maxStream = 0x00;
+    uint8_t interval = 0x00;
     cy_en_usbd_ret_code_t usbdRetCode;
 
     /* If it is not endpoint descriptor then return */
@@ -839,6 +905,7 @@ void Cy_USB_AppConfigureEndp(cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, uint8_t *pEndpDs
     }
 
     valid = 0x01;
+    Cy_USBD_GetEndpInterval(pEndpDscr, &interval);
 
     /* Prepare endpointConfig parameter. */
     endpConfig.endpType = (cy_en_usb_endp_type_t)endpType;
@@ -849,6 +916,7 @@ void Cy_USB_AppConfigureEndp(cy_stc_usb_usbd_ctxt_t *pUsbdCtxt, uint8_t *pEndpDs
     endpConfig.isoPkts = isoPkts;
     endpConfig.burstSize = burstSize;
     endpConfig.streamID = maxStream;
+    endpConfig.interval = interval;
     /*
      * allowNakTillDmaRdy = true means device will send NAK
      * till DMA setup is ready. This field is applicable to only
@@ -1097,15 +1165,6 @@ void Cy_USB_AppSetupCallback(void *pAppCtxt, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
                     status = xQueueSendFromISR(pUsbApp->usbMsgQueue, &(xMsg), &(xHigherPriorityTaskWoken));
                     ASSERT_NON_BLOCK(pdTRUE == status,status);
 
-                    /* Reset the DMA channel through which data is received from the LVDS side. */
-                    Cy_HBDma_Channel_Reset(pUsbApp->hbBulkInChannel[0]);
-                    Cy_USBHS_App_ResetEpDma(&(pUsbApp->endpInDma[pUsbApp->slffInEpNum1]));
-                    /* Flush and reset the endpoint and clear the STALL bit. */
-                    Cy_USBD_FlushEndp(pUsbdCtxt, pUsbApp->slffInEpNum1, CY_USB_ENDP_DIR_IN);
-                    Cy_USBD_ResetEndp(pUsbdCtxt, pUsbApp->slffInEpNum1, CY_USB_ENDP_DIR_IN, false);
-                    Cy_USB_USBD_EndpSetClearStall(pUsbdCtxt, ((uint32_t)wIndex & 0x7FUL), epDir, false);
-                    pUsbApp->slffPendingRxBufCnt1 = 0;
-
                 }
                 else if(((wIndex & 0x7F) == pUsbApp->slffInEpNum2))
                 {
@@ -1114,16 +1173,6 @@ void Cy_USB_AppSetupCallback(void *pAppCtxt, cy_stc_usb_usbd_ctxt_t *pUsbdCtxt,
                     xMsg.data[0] = pUsbApp->slffInEpNum2;
                     status = xQueueSendFromISR(pUsbApp->usbMsgQueue, &(xMsg), &(xHigherPriorityTaskWoken));
                     ASSERT_NON_BLOCK(pdTRUE == status,status);
-
-
-                    /* Reset the DMA channel through which data is received from the LVDS side. */
-                    Cy_HBDma_Channel_Reset(pUsbApp->hbBulkInChannel[1]);
-                    Cy_USBHS_App_ResetEpDma(&(pUsbApp->endpInDma[pUsbApp->slffInEpNum2]));
-                    /* Flush and reset the endpoint and clear the STALL bit. */
-                    Cy_USBD_FlushEndp(pUsbdCtxt, pUsbApp->slffInEpNum2, CY_USB_ENDP_DIR_IN);
-                    Cy_USBD_ResetEndp(pUsbdCtxt, pUsbApp->slffInEpNum2, CY_USB_ENDP_DIR_IN, false);
-                    Cy_USB_USBD_EndpSetClearStall(pUsbdCtxt, ((uint32_t)wIndex & 0x7FUL), epDir, false);
-                    pUsbApp->slffPendingRxBufCnt2 = 0;
                 }
 
                 Cy_USBD_SendAckSetupDataStatusStage(pUsbdCtxt);

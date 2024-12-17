@@ -537,7 +537,7 @@ void Cy_PrintVersionInfo(const char *type, uint32_t version)
     tString[typeLen++] = '\n';
     tString[typeLen] = 0;
 
-    DBG_APP_INFO("%s", tString);
+    Cy_Debug_AddToLog(1,"%s", tString);
 }
 
 /*****************************************************************************
@@ -592,8 +592,6 @@ void Cy_USB_USBHSInit(void)
 
     /* Enable interrupts. */
     __enable_irq();
-
-    InitUart(LOGGING_SCB_IDX);
 
 #if FPGA_ENABLE
     /* Initialize I2C SCB*/
@@ -832,7 +830,15 @@ int main(void)
     Cy_USB_USBHSInit();
 
 #if DEBUG_INFRA_EN
+#if !USBFS_LOGS_ENABLE    
+    InitUart(LOGGING_SCB_IDX);
+#endif /* !USBFS_LOGS_ENABLE */
+
     Cy_Debug_LogInit(&dbgCfg);
+
+    /* Create task for printing logs and check status. */
+    xTaskCreate(PrintTaskHandler, "PrintLogTask", 512, NULL, 5, &printLogTaskHandle);
+
     Cy_SysLib_Delay(500);
     Cy_Debug_AddToLog(1, "********** FX2G3: LVCMOS Slave FIFO IN Application ********** \r\n");
 
@@ -840,9 +846,6 @@ int main(void)
     Cy_PrintVersionInfo("APP_VERSION: ", APP_VERSION_NUM);
     Cy_PrintVersionInfo("USBD_VERSION: ", USBD_VERSION_NUM);
     Cy_PrintVersionInfo("HBDMA_VERSION: ", HBDMA_VERSION_NUM);
-
-    /* Create task for printing logs and check status. */
-    xTaskCreate(PrintTaskHandler, "PrintLogTask", 512, NULL, 5, &printLogTaskHandle);
 #endif /* DEBUG_INFRA_EN */
 
     memset((uint8_t *)&appCtxt, 0, sizeof(appCtxt));
@@ -857,7 +860,7 @@ int main(void)
 
     /* Initialize the HbDma IP and DMA Manager */
     Cy_Slff_HbDmaInit();
-    DBG_APP_INFO("Cy_Slff_HbDmaInit done\r\n");
+    DBG_APP_INFO("HbDmaInit done\r\n");
 
     /* Initialize the USBD layer */
     Cy_USB_USBD_Init(&appCtxt, &usbdCtxt, pCpuDmacBase, &hsCalCtxt,NULL, &HBW_MgrCtxt);
