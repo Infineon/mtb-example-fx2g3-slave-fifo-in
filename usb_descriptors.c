@@ -2,11 +2,11 @@
 * \file usb_descriptors.c
 * \version 1.0
 *
-* Defines the USB descriptors used in the USB Slave FIFO application.
+* \brief Defines the USB descriptors used in the USB Slave FIFO application.
 *
 *******************************************************************************
 * \copyright
-* (c) (2024), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -27,13 +27,12 @@
 #include "cy_pdl.h"
 #include "usb_app.h"
 
-
 /* Standard device descriptor */
 USB_DESC_ATTRIBUTES uint8_t CyFxUSB20DeviceDscr[] =
 {
     0x12,                           /* Descriptor size */
     0x01,                           /* Device descriptor type */
-    0x10,0x02,                      /* USB 2.00 (TODO: Avoiding LPM-L1 for now). */
+    0x10,0x02,                      /* USB 2.10 */
     0x00,                           /* Device class*/
     0x00,                           /* Device sub-class */
     0x00,                           /* Device protocol */
@@ -62,6 +61,7 @@ USB_DESC_ATTRIBUTES uint8_t CyFxUSBBOSDscr[32] =
     0x1E,0x64,0x00,0x00,            /* Supported device level features: LPM support, BESL supported,
                                        Baseline BESL=400 us, Deep BESL=1000 us. */
 };
+
 
 /* Standard high speed configuration descriptor */
 USB_DESC_ATTRIBUTES uint8_t CyFxUSBHSConfigDscr[64] =

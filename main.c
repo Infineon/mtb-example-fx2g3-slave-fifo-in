@@ -2,15 +2,15 @@
 * \file main.c
 * \version 1.0
 *
-* Description: This is the source code for the USB Slave FIFO IN Application Example
-*              for ModusToolbox.
+* \brief    This is the source code for the USB Slave FIFO IN Application Example
+*           for ModusToolbox.
 *
-* Related Document: See README.md
+* See \ref README.md ["README.md"]
 *
 *
 *******************************************************************************
 * \copyright
-* (c) (2024), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -41,7 +41,6 @@
 #include "cy_usbd_version.h"
 #include "cy_hbdma_version.h"
 #include "cy_lvds.h"
-
 #include "app_version.h"
 #include "timers.h"
 #include "usb_i2c.h"
@@ -55,14 +54,21 @@
 
 /* Debug log related initilization */
 #if DEBUG_INFRA_EN
+/* RAM buffer used to hold debug log data. */
 #define LOGBUF_SIZE (1024u)
 uint8_t logBuff[LOGBUF_SIZE];
 
+cy_stc_debug_config_t dbgCfg = {
+    .pBuffer         = logBuff,
+    .traceLvl        = DEBUG_LEVEL,
+    .bufSize         = LOGBUF_SIZE,
 #if USBFS_LOGS_ENABLE
-    cy_stc_debug_config_t dbgCfg = {logBuff, DEBUG_LEVEL, LOGBUF_SIZE, CY_DEBUG_INTFCE_USBFS_CDC, true};
+    .dbgIntfce       = CY_DEBUG_INTFCE_USBFS_CDC,
 #else
-    cy_stc_debug_config_t dbgCfg = {logBuff, DEBUG_LEVEL, LOGBUF_SIZE, CY_DEBUG_INTFCE_UART_SCB4, true};
-#endif /* USBFS_LOGS_ENABLE */
+    .dbgIntfce       = CY_DEBUG_INTFCE_UART_SCB4,
+#endif
+    .printNow        = true
+};
 
 TaskHandle_t printLogTaskHandle;
 #endif /* DEBUG_INFRA_EN */
@@ -85,6 +91,7 @@ cy_stc_usb_usbd_ctxt_t usbdCtxt;
 cy_stc_usb_app_ctxt_t appCtxt;
 cy_stc_usb_cal_ctxt_t hsCalCtxt;
 
+/* Common descriptors shared across speed. */
 extern const uint8_t CyFxUSBBOSDscr[];
 extern const uint8_t CyFxUSBDeviceQualDscr[];
 extern const uint8_t CyFxUSBStringLangIDDscr[];
@@ -98,6 +105,10 @@ extern void xPortPendSVHandler(void);
 extern void xPortSysTickHandler(void);
 extern void vPortSVCHandler(void);
 
+/**
+ * \name vPortSetupTimerInterrupt
+ * \retval None
+ */
 void vPortSetupTimerInterrupt(void)
 {
     /* Register the exception vectors. */
@@ -126,6 +137,12 @@ void PrintTaskHandler(void *pTaskParam)
 }
 #endif /* DEBUG_INFRA_EN */
 
+/**
+ * \name Cy_Slff_GpifIntr
+ * \brief GPIF Interrupt Handler
+ * \param pApp app context
+ * \retval None
+ */
 void
 Cy_Slff_GpifIntr(void *pApp)
 {
@@ -156,11 +173,27 @@ Cy_Slff_GpifIntr(void *pApp)
     return;
 }
 
+/**
+ * \name Cy_LVDS_GpifEventCb
+ * \brief GPIF error callback function.
+ * \param smNo state machine number
+ * \param gpifEvent GPIF event
+ * \param cntxt app context
+ * \retval None
+ */
 void Cy_LVDS_GpifEventCb(uint8_t smNo, cy_en_lvds_gpif_event_type_t gpifEvent, void *cntxt)
 {
     Cy_Slff_GpifIntr(&appCtxt);
 }
 
+/**
+ * \name Cy_LVDS_PhyEventCb
+ * \brief GPIF error callback function.
+ * \param smNo state machine number
+ * \param phyEvent LVCMOS PHY event
+ * \param cntxt app context
+ * \retval None
+ */
 void Cy_LVDS_PhyEventCb(uint8_t smNo, cy_en_lvds_phy_events_t phyEvent, void *cntxt)
 {
     if(phyEvent == CY_LVDS_PHY_L1_EXIT)
@@ -186,14 +219,14 @@ void Cy_LVDS_PhyEventCb(uint8_t smNo, cy_en_lvds_phy_events_t phyEvent, void *cn
     }
 }
 
-void Cy_LVDS_LowPowerEventCb(cy_en_lvds_low_power_events_t lowPowerEvent, void *cntxt)
-{
-    if(lowPowerEvent == CY_LVDS_LOW_POWER_LNK0_L3_EXIT)
-    {
-        DBG_APP_INFO("P0_L3_Exit\r\n");
-    }
-}
-
+/**
+ * \name Cy_LVDS_GpifErrorCb
+ * \brief GPIF error callback function.
+ * \param smNo state machine number
+ * \param gpifError GPIF error
+ * \param cntxt app context
+ * \retval None
+ */
 void Cy_LVDS_GpifErrorCb(uint8_t smNo, cy_en_lvds_gpif_error_t gpifError, void *cntxt)
 {
     switch (gpifError)
@@ -228,6 +261,14 @@ void Cy_LVDS_GpifErrorCb(uint8_t smNo, cy_en_lvds_gpif_error_t gpifError, void *
     }
 }
 
+/**
+ * \name Cy_LVDS_GpifThreadErrorCb
+ * \brief GPIF thread error callback function.
+ * \param ThNo thread number
+ * \param ThError thread error
+ * \param cntxt app context
+ * \retval None
+ */
 void Cy_LVDS_GpifThreadErrorCb (cy_en_lvds_gpif_thread_no_t ThNo, cy_en_lvds_gpif_thread_error_t ThError, void *cntxt)
 {
     switch (ThNo)
@@ -267,6 +308,9 @@ void Cy_LVDS_GpifThreadErrorCb (cy_en_lvds_gpif_thread_no_t ThNo, cy_en_lvds_gpi
             case CY_LVDS_GPIF_THREAD_READ_BURST_ERR:
             DBG_APP_ERR("CY_LVDS_GPIF_THREAD_READ_BURST_ERR\n\r");
             break;
+
+            default:
+                break;
         }
         break;
 
@@ -282,22 +326,15 @@ cy_stc_lvds_app_cb_t cb =
     .gpif_thread_error = Cy_LVDS_GpifThreadErrorCb,
     .gpif_thread_event = NULL,
     .phy_events = Cy_LVDS_PhyEventCb,
-    .low_power_events   = Cy_LVDS_LowPowerEventCb
+    .low_power_events   = NULL
 };
 
-/*****************************************************************************
- * Function Name: Cy_Slff_LvdsInit
- *****************************************************************************
- * Summary
- *  Initialize the LVDS interface. Currently, only the SIP #0 is being initialized
- *  and configured to allow transfers into the HBW SRAM through DMA.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  void
- ****************************************************************************/
+/**
+ * \name Cy_Slff_LvdsInit
+ * \brief   Initialize the LVDS interface. Currently, only the SIP #0 is being initialized
+ *          and configured to allow transfers into the HBW SRAM through DMA.
+ * \retval None
+ */
 void Cy_Slff_LvdsInit(void)
 {
     cy_en_lvds_status_t status = CY_LVDS_SUCCESS;
@@ -326,6 +363,9 @@ void Cy_Slff_LvdsInit(void)
     Cy_LVDS_GpifThreadConfig(LVDSSS_LVDS, 0, 0, 0, 0, 0);
     Cy_LVDS_GpifThreadConfig(LVDSSS_LVDS, 1, 1, 0, 0, 0);
 
+    /*Enable Clock Out*/
+    Cy_LVDS_ClkOutEnable(LVDSSS_LVDS,CY_LVDS_PHY_INTERFACE_CLK_OUT_48_MHZ);
+
     Cy_LVDS_Enable(LVDSSS_LVDS);
     DBG_APP_INFO("LVCMOS Enabled\r\n");
 
@@ -333,36 +373,22 @@ void Cy_Slff_LvdsInit(void)
     ASSERT_NON_BLOCK(CY_LVDS_SUCCESS == status, status);
 }
 
-/*****************************************************************************
- * Function Name: Cy_LVDS_ISR
- ******************************************************************************
- * Summary:
- *  Handler for LVDS Interrupts.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  None
- *****************************************************************************/
+/**
+ * \name Cy_LVDS_ISR
+ * \brief Handler for LVDS Interrupts.
+ * \retval None
+ */
 
 void Cy_LVDS_ISR(void)
 {
     Cy_LVDS_IrqHandler(LVDSSS_LVDS, &lvdsContext);
 }
 
-/*****************************************************************************
- * Function Name: Cy_LvdsPortDma_ISR
- ******************************************************************************
- * Summary:
- *  Handler for LVDS Port0 Interrupts.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  None
- *****************************************************************************/
+/**
+ * \name Cy_LvdsPortDma_ISR
+ * \brief Handler for LVDS Port0 Interrupts.
+ * \retval None
+ */
 void Cy_LvdsPortDma_ISR(void)
 {
     /* Call the HBDMA interrupt handler with the appropriate adapter ID. */
@@ -370,30 +396,25 @@ void Cy_LvdsPortDma_ISR(void)
     portYIELD_FROM_ISR(true);
 }
 
-/*****************************************************************************
- * Function Name: Cy_USB_HS_ISR
- ******************************************************************************
- * Summary:
- *  Handler for USB-HS Interrupts.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  None
- *****************************************************************************/
+/**
+ * \name Cy_USB_HS_ISR
+ * \brief Handler for USB-HS Interrupts.
+ * \retval None
+ */
 void Cy_USB_HS_ISR(void)
 {
-#if FREERTOS_ENABLE
+
     if (Cy_USBHS_Cal_IntrHandler(&hsCalCtxt))
     {
         portYIELD_FROM_ISR(true);
     }
-#else
-    Cy_USBHS_Cal_IntrHandler(&hsCalCtxt);
-#endif /* FREERTOS_ENABLE */
 }
 
+/**
+ * \name Cy_Slff_RxDataWireCombined_ISR(void)
+ * \brief Datawire combined ISR for CM0+
+ * \retval None
+ */
 #if !CY_CPU_CORTEX_M4
 void Cy_Slff_RxDataWireCombined_ISR (void)
 {
@@ -413,7 +434,11 @@ void Cy_Slff_RxDataWireCombined_ISR (void)
 }
 #endif
 
-/* SlaveFIFO RX for channel#1 */
+/**
+ * \name Cy_Slff_RxChannel1DataWire_ISR(void)
+ * \brief Datawire ISR for slaveFIFO RX for channel#1
+ * \retval None
+ */
 void Cy_Slff_RxChannel1DataWire_ISR (void)
 {
     /* Clear the interrupt first. */
@@ -423,7 +448,11 @@ void Cy_Slff_RxChannel1DataWire_ISR (void)
     Cy_Slff_AppHandleRxCompletion(&appCtxt, 1);
 }
 
-/* SlaveFIFO RX for channel#2 */
+/**
+ * \name Cy_Slff_RxChannel2DataWire_ISR(void)
+ * \brief Datawire ISR for slaveFIFO RX for channel#2
+ * \retval None
+ */
 void Cy_Slff_RxChannel2DataWire_ISR (void)
 {
     /* Clear the interrupt first. */
@@ -433,19 +462,13 @@ void Cy_Slff_RxChannel2DataWire_ISR (void)
     Cy_Slff_AppHandleRxCompletion(&appCtxt, 2);
 }
 
-/*******************************************************************************
- * Function name: Cy_Fx2g3_InitPeripheralClocks
- ****************************************************************************//**
- *
- * Function used to enable clocks to different peripherals on the FX2G3 device.
- *
- * \param adcClkEnable
- * Whether to enable clock to the ADC in the USBSS block.
- *
- * \param usbfsClkEnable
- * Whether to enable bus reset detect clock input to the USBFS block.
- *
- *******************************************************************************/
+/**
+ * \name Cy_Fx2g3_InitPeripheralClocks
+ * \brief Function used to enable clocks to different peripherals on the FX2G3 device.
+ * \param adcClkEnable Whether to enable clock to the ADC in the USBSS block.
+ * \param usbfsClkEnable Whether to enable bus reset detect clock input to the USBFS block.
+ * \retval None
+ */
 void Cy_Fx2g3_InitPeripheralClocks (
         bool adcClkEnable,
         bool usbfsClkEnable)
@@ -467,18 +490,16 @@ void Cy_Fx2g3_InitPeripheralClocks (
     }
 }
 
-/*******************************************************************************
- * Function name: Cy_Fx2g3_OnResetInit
- ****************************************************************************//**
- *
- * This function performs initialization that is required to enable scatter
- * loading of data into the High BandWidth RAM during device boot-up. The FX2G3
- * device comes up with the High BandWidth RAM disabled and hence any attempt
- * to read/write the RAM will cause the processor to hang. The RAM needs to
- * be enabled with default clock settings to allow scatter loading to work.
- * This function needs to be called from Cy_OnResetUser.
- *
- *******************************************************************************/
+/**
+ * \name Cy_Fx2g3_OnResetInit
+ * \details This function performs initialization that is required to enable scatter
+ *          loading of data into the High BandWidth RAM during device boot-up. The FX2G3
+ *          device comes up with the High BandWidth RAM disabled and hence any attempt
+ *          to read/write the RAM will cause the processor to hang. The RAM needs to
+ *          be enabled with default clock settings to allow scatter loading to work.
+ *          This function needs to be called from Cy_OnResetUser.
+ * \retval None
+ */
 void
 Cy_Fx2g3_OnResetInit (
         void)
@@ -494,19 +515,13 @@ Cy_Fx2g3_OnResetInit (
             (3UL << MAIN_REG_CTRL_DMA_SRC_SEL_Pos));
 }
 
-/*****************************************************************************
- * Function Name: Cy_PrintVersionInfo
- ******************************************************************************
- * Summary:
- *  Function to print version information to UART console.
- *
- * Parameters:
- *  type: Type of version string.
- *  version: Version number including major, minor, patch and build number.
- *
- * Return:
- *  None
- *****************************************************************************/
+/**
+ * \name Cy_PrintVersionInfo
+ * \brief Function to print version information to UART console.
+ * \param type Type of version string.
+ * \param version Version number including major, minor, patch and build number.
+ * \retval None
+ */
 void Cy_PrintVersionInfo(const char *type, uint32_t version)
 {
     char tString[32];
@@ -540,18 +555,11 @@ void Cy_PrintVersionInfo(const char *type, uint32_t version)
     Cy_Debug_AddToLog(1,"%s", tString);
 }
 
-/*****************************************************************************
- * Function Name: Cy_USB_VbusDetGpio_ISR
- *****************************************************************************
- * Summary
- *  Interrupt handler for the Vbus detect GPIO transition detection.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  void
- ****************************************************************************/
+/**
+ * \name Cy_USB_VbusDetGpio_ISR
+ * \brief Interrupt handler for the Vbus detect GPIO transition detection.
+ * \retval None
+ */
 static void Cy_USB_VbusDetGpio_ISR(void)
 {
     BaseType_t xHigherPriorityTaskWoken;
@@ -566,25 +574,19 @@ static void Cy_USB_VbusDetGpio_ISR(void)
     Cy_GPIO_SetInterruptMask(VBUS_DETECT_GPIO_PORT, VBUS_DETECT_GPIO_PIN, 0);
 }
 
-/*****************************************************************************
- * Function Name: Cy_USB_USBHSInit
- *****************************************************************************
- * Summary
- *  Initialize USBHS block and attempt device enumeration.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  void
- ****************************************************************************/
+/**
+ * \name Cy_USB_USBHSInit
+ * \brief Initialize USBHS block and attempt device enumeration.
+ * \retval None
+ */
 void Cy_USB_USBHSInit(void)
 {
     cy_stc_gpio_pin_config_t pinCfg;
     cy_stc_sysint_t intrCfg;
-   
+
     /* Do all the relevant clock configuration */
     Cy_Fx2g3_InitPeripheralClocks(false, true);
+
 
     /* Unlock and then disable the watchdog. */
     Cy_WDT_Unlock();
@@ -592,11 +594,6 @@ void Cy_USB_USBHSInit(void)
 
     /* Enable interrupts. */
     __enable_irq();
-
-#if FPGA_ENABLE
-    /* Initialize I2C SCB*/
-    Cy_USB_I2CInit ();
-#endif /* FPGA_ENABLE */
 
     memset((void *)&pinCfg, 0, sizeof(pinCfg));
 
@@ -607,20 +604,29 @@ void Cy_USB_USBHSInit(void)
     pinCfg.intMask   = 0x01UL;
     Cy_GPIO_Pin_Init(VBUS_DETECT_GPIO_PORT, VBUS_DETECT_GPIO_PIN, &pinCfg);
 
+    /* CM0+: Interrupt source to NVIC Mux map
+       LVDS - NVIC Mux #0
+       VBUS(GPIO#4) - NVIC Mux #2
+       SCB0(I2C) - NVIC Mux #3
+       SIP0 DMA - NVIC Mux #4
+       USBHS Active & DeepSleep - NVIC Mux #5
+       DataWire 0 - NVIC Mux #6
+	   DataWire 1 - NVIC Mux #1
+    */
     /* Register edge detect interrupt for Vbus detect GPIO. */
 #if CY_CPU_CORTEX_M4
     intrCfg.intrSrc = VBUS_DETECT_GPIO_INTR;
     intrCfg.intrPriority = 7;
 #else
     intrCfg.cm0pSrc = VBUS_DETECT_GPIO_INTR;
-    intrCfg.intrSrc = NvicMux5_IRQn;
+    intrCfg.intrSrc = NvicMux2_IRQn;
     intrCfg.intrPriority = 3;
 #endif /* CY_CPU_CORTEX_M4 */
     Cy_SysInt_Init(&intrCfg, Cy_USB_VbusDetGpio_ISR);
     NVIC_EnableIRQ(intrCfg.intrSrc);
 
     /*
-     * CMR-4 RTL specific initialization: The LVDS2USB32SS IP block
+     * Enable the DMA buffer RAM
      * need to be enabled before we try to do High BandWidth DMA initialization.
      */
     MAIN_REG->CTRL |= MAIN_REG_CTRL_IP_ENABLED_Msk;
@@ -674,18 +680,11 @@ void Cy_USB_USBHSInit(void)
     NVIC_EnableIRQ(intrCfg.intrSrc);
 }
 
-/*****************************************************************************
- * Function Name: Cy_Slff_HbDmaInit
- *****************************************************************************
- * Summary
- *  Initialize HBDMA block.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  void
- ****************************************************************************/
+/**
+ * \name Cy_Slff_HbDmaInit
+ * \brief Initialize HBDMA block.
+ * \retval None
+ */
 bool Cy_Slff_HbDmaInit(void)
 {
     cy_en_hbdma_status_t drvstat;
@@ -722,56 +721,35 @@ bool Cy_Slff_HbDmaInit(void)
     return true;
 }
 
-/*****************************************************************************
- * Function Name: Cy_USB_DisableUsbBlock
- ******************************************************************************
- * Summary:
- *  Function to disable the HBDMA IP block after terminating current
- *  connection.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  None
- *****************************************************************************/
+/**
+ * \name Cy_USB_DisableUsbBlock
+ * \brief   Function to disable the HBDMA IP block after terminating current
+ *          connection.
+ * \retval None
+ */
 void Cy_USB_DisableUsbBlock (void)
 {
     Cy_HBDma_DeInit(&HBW_DrvCtxt);
-    DBG_APP_INFO("Disabled HBWSS DMA adapters\r\n");
+    DBG_APP_INFO("USB DISABLE\r\n");
 }
 
-/*****************************************************************************
- * Function Name: Cy_USB_EnableUsbBlock
- ******************************************************************************
- * Summary:
- *  Function to enable the HBDMA IP block before enabling a new USB
- *  connection.
- *
- * Parameters:
- *  None
- *
- * Return:
- *  None
- *****************************************************************************/
+/**
+ * \name Cy_USB_EnableUsbBlock
+ * \brief Function to enable the HBDMA IP block before enabling a new USB
+ *  connection. * \retval None
+ */
 void Cy_USB_EnableUsbBlock (void)
 {
     /* Enable the USB DMA adapters and respective interrupts. */
     Cy_HBDma_Init(NULL, USB32DEV, &HBW_DrvCtxt, 0, 0);
 }
 
-/*****************************************************************************
- * Function Name: Cy_USB_EnableUsbHSConnection
- *****************************************************************************
- * Summary
- *  Enable USBHS connection
- *
- * Parameters:
- *  pAppCtxt: Pointer to UVC application context structure.
- *
- * Return:
- *  void
- ****************************************************************************/
+/**
+ * \name Cy_USB_EnableUsbHSConnection
+ * \brief Enable USBHS connection
+ * \param pAppCtxt Pointer to UVC application context structure.
+ * \retval None
+ */
 bool Cy_USB_EnableUsbHSConnection (cy_stc_usb_app_ctxt_t *pAppCtxt)
 {
 
@@ -781,18 +759,11 @@ bool Cy_USB_EnableUsbHSConnection (cy_stc_usb_app_ctxt_t *pAppCtxt)
     return true;
 }
 
-/*****************************************************************************
- * Function Name: Cy_USB_DisableUsbHSConnection
- *****************************************************************************
- * Summary
- *  Diable USBHS connection
- *
- * Parameters:
- *  None
- *
- * Return:
- *  void
- ****************************************************************************/
+/**
+ * \name Cy_USB_DisableUsbHSConnection
+ * \brief Disable USBHS connection
+ * \retval None
+ */
 void Cy_USB_DisableUsbHSConnection (cy_stc_usb_app_ctxt_t *pAppCtxt)
 {
     Cy_USBD_DisconnectDevice(pAppCtxt->pUsbdCtxt);
@@ -801,18 +772,11 @@ void Cy_USB_DisableUsbHSConnection (cy_stc_usb_app_ctxt_t *pAppCtxt)
     pAppCtxt->prevDevState = CY_USB_DEVICE_STATE_DISABLE;
 }
 
-/*****************************************************************************
-* Function Name: main(void)
-******************************************************************************
-* Summary:
-*  Entry to the application.
-*
-* Parameters:
-*  void
-*
-* Return:
-*  Does not return.
-*****************************************************************************/
+/**
+ * \name main
+ * \brief Entry to the application.
+ * \retval Does not return.
+ */
 int main(void)
 {
     pCpuDmacBase = ((DMAC_Type *)DMAC_BASE);
@@ -830,23 +794,33 @@ int main(void)
     Cy_USB_USBHSInit();
 
 #if DEBUG_INFRA_EN
-#if !USBFS_LOGS_ENABLE    
+#if !USBFS_LOGS_ENABLE
+    /* Initialize the UART for logging. */
     InitUart(LOGGING_SCB_IDX);
-#endif /* !USBFS_LOGS_ENABLE */
+#endif /* USBFS_LOGS_ENABLE */
 
+    /*
+     * Initialize the logger module. We are using a blocking print option which will
+     * output the messages immediately without buffering.
+     */
     Cy_Debug_LogInit(&dbgCfg);
 
     /* Create task for printing logs and check status. */
     xTaskCreate(PrintTaskHandler, "PrintLogTask", 512, NULL, 5, &printLogTaskHandle);
 
     Cy_SysLib_Delay(500);
-    Cy_Debug_AddToLog(1, "********** FX2G3: LVCMOS Slave FIFO IN Application ********** \r\n");
+    Cy_Debug_AddToLog(1, "********** FX2G3: LVCMOS SlaveFIFO IN Application ********** \r\n");
 
     /* Print application, USBD stack and HBDMA version information. */
     Cy_PrintVersionInfo("APP_VERSION: ", APP_VERSION_NUM);
     Cy_PrintVersionInfo("USBD_VERSION: ", USBD_VERSION_NUM);
     Cy_PrintVersionInfo("HBDMA_VERSION: ", HBDMA_VERSION_NUM);
 #endif /* DEBUG_INFRA_EN */
+
+#if FPGA_ENABLE
+    /* Initialize I2C SCB*/
+    Cy_USB_I2CInit ();
+#endif /* FPGA_ENABLE */
 
     memset((uint8_t *)&appCtxt, 0, sizeof(appCtxt));
     memset((uint8_t *)&hsCalCtxt, 0, sizeof(hsCalCtxt));
@@ -860,7 +834,7 @@ int main(void)
 
     /* Initialize the HbDma IP and DMA Manager */
     Cy_Slff_HbDmaInit();
-    DBG_APP_INFO("HbDmaInit done\r\n");
+    DBG_APP_INFO("HbDmaInit done \r\n");
 
     /* Initialize the USBD layer */
     Cy_USB_USBD_Init(&appCtxt, &usbdCtxt, pCpuDmacBase, &hsCalCtxt,NULL, &HBW_MgrCtxt);
@@ -887,25 +861,22 @@ int main(void)
     DBG_APP_INFO("Scheduler start done\r\n");
     /* Invokes scheduler: Not expected to return. */
     vTaskStartScheduler();
-    while (1);
+    while (1)
+    {
+    	Cy_SysLib_Delay(10000);
+    	DBG_APP_INFO("Task Idle\r\n");
+    }
 
     return 0;
 }
 
-/*****************************************************************************
- * Function Name: Cy_OnResetUser(void)
- ******************************************************************************
- * Summary:
- *  Init function which is executed before the load regions in RAM are updated.
- *  The High BandWidth subsystem needs to be enable here to allow variables
- *  placed in the High BandWidth SRAM to be updated.
- *
- * Parameters:
- *  void
- *
- * Return:
- *  void
- *****************************************************************************/
+/**
+ * \name Cy_OnResetUser(void)
+ * \brief Init function which is executed before the load regions in RAM are updated.
+ * \details The High BandWidth subsystem needs to be enable here to allow variables
+ *          placed in the High BandWidth SRAM to be updated.
+ * \retval None
+ */
 void Cy_OnResetUser(void)
 {
     Cy_Fx2g3_OnResetInit();
