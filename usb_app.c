@@ -396,23 +396,23 @@ static void Cy_Slff_AppHandleRxEvent (cy_stc_usb_app_ctxt_t  *pUsbApp, cy_stc_hb
         /* Queue USBHS IN transfer */
         if(incFlag == 1)
         {
-        	intMask = Cy_SysLib_EnterCriticalSection();
+            intMask = Cy_SysLib_EnterCriticalSection();
             pUsbApp->slffPendingRxBufCnt1++;
             if(pUsbApp->slffPendingRxBufCnt1 > 1)
             {
-            	Cy_SysLib_ExitCriticalSection(intMask);
+                Cy_SysLib_ExitCriticalSection(intMask);
                 return;
             }
             Cy_SysLib_ExitCriticalSection(intMask);
         }
 
           /* Wait for a free buffer. */
-		  status = Cy_HBDma_Channel_GetBuffer(pChHandle, &buffStat);
-		  if (status != CY_HBDMA_MGR_SUCCESS)
-		  {
-			  DBG_APP_ERR("SOC_ERROR\r\n");
-			  return;
-		  }
+          status = Cy_HBDma_Channel_GetBuffer(pChHandle, &buffStat);
+          if (status != CY_HBDMA_MGR_SUCCESS)
+          {
+              DBG_APP_ERR("SOC_ERROR\r\n");
+              return;
+          }
 
           Cy_USB_AppQueueWrite(pUsbApp, pUsbApp->slffInEpNum1, buffStat.pBuffer, buffStat.count);
     }
@@ -421,12 +421,12 @@ static void Cy_Slff_AppHandleRxEvent (cy_stc_usb_app_ctxt_t  *pUsbApp, cy_stc_hb
         /* Queue USBHS IN transfer */
         if(incFlag == 1)
         {
-        	intMask = Cy_SysLib_EnterCriticalSection();
+            intMask = Cy_SysLib_EnterCriticalSection();
             pUsbApp->slffPendingRxBufCnt2++;
             if(pUsbApp->slffPendingRxBufCnt2 > 1)
             {
-            	Cy_SysLib_ExitCriticalSection(intMask);
-            	return;
+                Cy_SysLib_ExitCriticalSection(intMask);
+                return;
             }
             Cy_SysLib_ExitCriticalSection(intMask);
         }
@@ -522,7 +522,11 @@ void Cy_Slff_AppTaskHandler(void *pTaskParam)
     vTaskDelay(100);
 
     /* If VBus is present, enable the USB connection. */
-    pAppCtxt->vbusPresent = (Cy_GPIO_Read(VBUS_DETECT_GPIO_PORT, VBUS_DETECT_GPIO_PIN) == VBUS_DETECT_STATE);
+    pAppCtxt->vbusPresent =
+    (Cy_GPIO_Read(VBUS_DETECT_GPIO_PORT, VBUS_DETECT_GPIO_PIN) == VBUS_DETECT_STATE);
+#if USBFS_LOGS_ENABLE
+    vTaskDelay(500);
+#endif /* USBFS_LOGS_ENABLE */
     if (pAppCtxt->vbusPresent) {
         Cy_USB_EnableUsbHSConnection(pAppCtxt);
     }
@@ -761,21 +765,21 @@ void Cy_USB_AppRegisterCallback(cy_stc_usb_app_ctxt_t *pAppCtxt)
     cy_stc_usb_usbd_ctxt_t *pUsbdCtxt = pAppCtxt->pUsbdCtxt;
 
     Cy_USBD_RegisterCallback(pUsbdCtxt, CY_USB_USBD_CB_RESET, Cy_USB_AppBusResetCallback);
-	
+    
     Cy_USBD_RegisterCallback(pUsbdCtxt, CY_USB_USBD_CB_RESET_DONE, Cy_USB_AppBusResetDoneCallback);
-	
+    
     Cy_USBD_RegisterCallback(pUsbdCtxt, CY_USB_USBD_CB_BUS_SPEED, Cy_USB_AppBusSpeedCallback);
-	
+    
     Cy_USBD_RegisterCallback(pUsbdCtxt, CY_USB_USBD_CB_SETUP, Cy_USB_AppSetupCallback);
-	
+    
     Cy_USBD_RegisterCallback(pUsbdCtxt, CY_USB_USBD_CB_SUSPEND, Cy_USB_AppSuspendCallback);
-	
+    
     Cy_USBD_RegisterCallback(pUsbdCtxt, CY_USB_USBD_CB_RESUME, Cy_USB_AppResumeCallback);
-	
+    
     Cy_USBD_RegisterCallback(pUsbdCtxt, CY_USB_USBD_CB_SET_CONFIG, Cy_USB_AppSetCfgCallback);
-	
+    
     Cy_USBD_RegisterCallback(pUsbdCtxt, CY_USB_USBD_CB_SET_INTF, Cy_USB_AppSetIntfCallback);
-	
+    
 }
 
 /**
@@ -1524,18 +1528,18 @@ void Cy_USB_AppInitDmaIntr(uint32_t endpNumber, cy_en_usb_endp_dir_t endpDirecti
 
         if (endpDirection == CY_USB_ENDP_DIR_IN)
         {
-		    intrCfg.intrPriority = 3;
+            intrCfg.intrPriority = 3;
             intrCfg.intrSrc = NvicMux1_IRQn;
             /* DW1 channels 0 onwards are used for IN endpoints. */
             intrCfg.cm0pSrc = (cy_en_intr_t)(cpuss_interrupts_dw1_0_IRQn + endpNumber);
         }
-		else
-		{
-			intrCfg.intrPriority = 3;
+        else
+        {
+            intrCfg.intrPriority = 3;
             intrCfg.intrSrc = NvicMux6_IRQn;
             /* DW0 channels 0 onwards are used for OUT endpoints. */
             intrCfg.cm0pSrc = (cy_en_intr_t)(cpuss_interrupts_dw0_0_IRQn + endpNumber);
-		}
+        }
 #else
         intrCfg.intrPriority = 5;
         if (endpDirection == CY_USB_ENDP_DIR_IN)
@@ -1624,12 +1628,12 @@ void Cy_Slff_AppHandleRxCompletion (cy_stc_usb_app_ctxt_t *pUsbApp, uint8_t inde
         pUsbApp->slffPendingRxBufCnt1--;
         if (pUsbApp->slffPendingRxBufCnt1 > 0)
         {
-        	Cy_SysLib_ExitCriticalSection(intMask);
+            Cy_SysLib_ExitCriticalSection(intMask);
             Cy_Slff_AppHandleRxEvent(pUsbApp, pUsbApp->hbBulkInChannel[0], 0, index);
         }
         else
         {
-        	Cy_SysLib_ExitCriticalSection(intMask);
+            Cy_SysLib_ExitCriticalSection(intMask);
         }
     }
     else if(index == 2)
@@ -1656,12 +1660,12 @@ void Cy_Slff_AppHandleRxCompletion (cy_stc_usb_app_ctxt_t *pUsbApp, uint8_t inde
         pUsbApp->slffPendingRxBufCnt2--;
         if (pUsbApp->slffPendingRxBufCnt2 > 0)
         {
-        	Cy_SysLib_ExitCriticalSection(intMask);
+            Cy_SysLib_ExitCriticalSection(intMask);
             Cy_Slff_AppHandleRxEvent(pUsbApp, pUsbApp->hbBulkInChannel[1], 0,index);
         }
         else
         {
-        	Cy_SysLib_ExitCriticalSection(intMask);
+            Cy_SysLib_ExitCriticalSection(intMask);
         }
     }
 }
