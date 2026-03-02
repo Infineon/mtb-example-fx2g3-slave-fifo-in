@@ -6,7 +6,7 @@
 *
 *******************************************************************************
 * \copyright
-* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2026), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -59,7 +59,7 @@ USB_DESC_ATTRIBUTES uint8_t CyFxUSBBOSDscr[32] =
     0x10,                           /* Device capability type descriptor */
     0x02,                           /* USB 2.0 extension capability type */
     0x1E,0x64,0x00,0x00,            /* Supported device level features: LPM support, BESL supported,
-                                       Baseline BESL=400 us, Deep BESL=1000 us. */
+                                       Baseline BESL=400 us, Deep BESL=1000 us */
 };
 
 
@@ -128,7 +128,7 @@ USB_DESC_ATTRIBUTES uint8_t CyFxUSBDeviceQualDscr[] =
     0x00                            /* Reserved */
 };
 
-/* Standard full speed configuration descriptor: full speed is not supported. */
+/* Standard full speed configuration descriptor: full speed is not supported */
 USB_DESC_ATTRIBUTES uint8_t CyFxUSBFSConfigDscr[] =
 {
     /* Configuration descriptor */
@@ -168,6 +168,7 @@ USB_DESC_ATTRIBUTES uint8_t CyFxUSBFSConfigDscr[] =
     0x02,                           /* Bulk endpoint type */
     0x40,0x00,                      /* Max packet size = 1024 bytes */
     0x00,                           /* Servicing interval for data transfers : 0 for Bulk */
+
 #if (!INTERLEAVE_EN && DEVICE1_EN)
     /* Endpoint descriptor for consumer EP */
     0x07,                           /* Descriptor size */
@@ -205,7 +206,7 @@ USB_DESC_ATTRIBUTES uint8_t CyFxUSBManufactureDscr[] =
 /* Standard product string descriptor */
 USB_DESC_ATTRIBUTES uint8_t CyFxUSBProductDscr[] =
 {
-    0x36, 0x03,    
+    0x36, 0x03,
     'E',  0x00,
     'Z',  0x00,
     '-',  0x00,
@@ -237,38 +238,38 @@ USB_DESC_ATTRIBUTES uint8_t CyFxUSBProductDscr[] =
 /* MS OS String Descriptor */
 USB_DESC_ATTRIBUTES uint8_t glOsString[] =
 {
-    0x12, /* Length. */
-    0x03, /* Type - string. */
-    'M', 0x00, 'S', 0x00, 'F', 0x00, 'T', 0x00, '1', 0x00, '0', 0x00, '0', 0x00, /* Signature. */
-    MS_VENDOR_CODE, /* MS vendor code. */
-    0x00 /* Padding. */
+    0x12, /* Length */
+    0x03, /* Type - string */
+    'M', 0x00, 'S', 0x00, 'F', 0x00, 'T', 0x00, '1', 0x00, '0', 0x00, '0', 0x00, /* Signature */
+    MS_VENDOR_CODE, /* MS vendor code */
+    0x00 /* Padding */
 };
 
 USB_DESC_ATTRIBUTES uint8_t glOsCompatibilityId[] =
 {
     /* Header */
-    0x28, 0x00, 0x00, 0x00, /* length Need to be updated based on number of interfaces. */
+    0x28, 0x00, 0x00, 0x00, /* length Need to be updated based on number of interfaces */
     0x00, 0x01, /* BCD version */
     0x04, 0x00, /* Index: 4 - compatibility ID */
-    0x01, /* count. Need to be updated based on number of interfaces. */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* reserved. */
+    0x01, /* count. Need to be updated based on number of interfaces */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* reserved */
     /* First Interface */
     0x00, /* Interface number */
-    0x01, /* reserved: Need to be 1. */
+    0x01, /* reserved: Need to be 1 */
     0x57, 0x49, 0x4E, 0x55, 0x53, 0x42, 0x00, 0x00, /* comp ID �ID to bind the device with
-                                                       WinUSB.*/
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* sub-compatibility ID - NONE. */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* reserved - needs to be zero. */
+                                                       WinUSB */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* sub-compatibility ID - NONE */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* reserved - needs to be zero */
 };
 
 USB_DESC_ATTRIBUTES uint8_t glOsFeature[] =
 {
     /* Header */
-    0x8E, 0x00, 0x00, 0x00, /* Length. */
+    0x8E, 0x00, 0x00, 0x00, /* Length */
     0x00, 0x01, /* BCD version. 1.0 as per MS */
     0x05, 0x00, /* Index */
-    0x01, 0x00, /* count. */
-    /* Property section. */
+    0x01, 0x00, /* count */
+    /* Property section */
     0x84, 0x00, 0x00, 0x00, /* length */
     0x01, 0x00, 0x00, 0x00, /* dwPropertyDataType: REG_DWORD_LITTLE_ENDIAN */
     0x28, 0x00, /* wPropertyNameLength: 0x30 */

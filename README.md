@@ -1,18 +1,18 @@
 # EZ-USB&trade; FX2G3: LVCMOS Slave FIFO IN application
 
-This code example explains the configuration and usage of Sensor Interface Port (SIP) on the **EZ-USB&trade; FX2G3** device to implement the Synchronous Slave FIFO IN protocol.
+This code example explains the configuration and usage of Sensor Interface Port (SIP) on the EZ-USB&trade; FX2G3 device to implement the Synchronous Slave FIFO IN protocol.
 A master device that implements the Infineon-defined Synchronous Slave FIFO protocol is required to perform data transfers with this application.
 
 
 [View this README on GitHub.](https://github.com/Infineon/mtb-example-fx2g3-slave-fifo-in)
 
-[Provide feedback on this code example.](https://cypress.co1.qualtrics.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyNDA2ODYiLCJTcGVjIE51bWJlciI6IjAwMi00MDY4NiIsIkRvYyBUaXRsZSI6IkVaLVVTQiZ0cmFkZTsgRlgyRzM6IExWQ01PUyBTbGF2ZSBGSUZPIElOIGFwcGxpY2F0aW9uIiwicmlkIjoic3VrdSIsIkRvYyB2ZXJzaW9uIjoiMS4wLjMiLCJEb2MgTGFuZ3VhZ2UiOiJFbmdsaXNoIiwiRG9jIERpdmlzaW9uIjoiTUNEIiwiRG9jIEJVIjoiV0lSRUQiLCJEb2MgRmFtaWx5IjoiSFNMU19VU0IifQ==)
+[Provide feedback on this code example.](https://yourvoice.infineon.com/jfe/form/SV_1NTns53sK2yiljn?Q_EED=eyJVbmlxdWUgRG9jIElkIjoiQ0UyNDA2ODYiLCJTcGVjIE51bWJlciI6IjAwMi00MDY4NiIsIkRvYyBUaXRsZSI6IkVaLVVTQiZ0cmFkZTsgRlgyRzM6IExWQ01PUyBTbGF2ZSBGSUZPIElOIGFwcGxpY2F0aW9uIiwicmlkIjoic3VtaXQua3VtYXJAaW5maW5lb24uY29tIiwiRG9jIHZlcnNpb24iOiIxLjAuNCIsIkRvYyBMYW5ndWFnZSI6IkVuZ2xpc2giLCJEb2MgRGl2aXNpb24iOiJNQ0QiLCJEb2MgQlUiOiJXSVJFRCIsIkRvYyBGYW1pbHkiOiJIU0xTX1VTQiJ9)
 
 
 ## Requirements
 
 
-- [ModusToolbox&trade;](https://www.infineon.com/modustoolbox) v3.5 or later (tested with v3.5)
+- [ModusToolbox&trade;](https://www.infineon.com/modustoolbox) v3.6 or later (tested with v3.5)
 - Board support package (BSP) minimum required version: 4.3.3
 - Programming language: C
 - Associated parts: [EZ-USB&trade; FX2G3](https://www.infineon.com/cms/en/product/promopages/ez-usb-fx2g3/)
@@ -41,9 +41,9 @@ See the [ModusToolbox&trade; tools package installation guide](https://www.infin
 
 Install a terminal emulator if you don't have one. Instructions in this document use [Tera Term](https://teratermproject.github.io/index-en.html).
 
-Install the **EZ-USB&trade; FX Control Center** (Alpha) application from [Infineon Developer Center](https://softwaretools.infineon.com/tools/com.ifx.tb.tool.ezusbfxcontrolcenter).
+Install the **EZ-USB&trade; FX Control Center** application from [Infineon Developer Center](https://softwaretools.infineon.com/tools/com.ifx.tb.tool.ezusbfxcontrolcenter).
 
-### Optional Software
+### Optional software
 
 [EZ-USB&trade; GPIF III Designer](https://softwaretools.infineon.com/tools/com.ifx.tb.tool.ezusbgpifiiidesigner) - EZ-USB&trade; GPIF III Designer, a desktop application that guides the process of defining general programmable interface and state machine to generate C source header for FX device family.
 
@@ -171,7 +171,7 @@ Perform the following steps to build this code example for a different, supporte
 
 5. Navigate the project with the IDE's **Explorer** and delete the *GeneratedSource* folder (if available) at *`<bsp-root-folder>`/bsps/TARGET_APP_KIT_FX2G3_104LGA/config*
 
-   > Note: For products `CYUSB2315-BF104AXI` and `CYUSB2316-BF104AXI`, additionally delete the `*.cyqspi` file from the config/ directory
+   > **Note**: For products `CYUSB2315-BF104AXI` and `CYUSB2316-BF104AXI`, additionally delete the `*.cyqspi` file from the config/ directory. 
 
 6. Launch the **Device Configurator** tool
 
@@ -191,16 +191,42 @@ b. In **main.c**, modify the SCB configuration by changing `LOGGING_SCB` from `(
 c. Launch the Device Configurator tool to disable `SCB4`, and enable `SCB0` for UART. Set `921600` baud, `9` Oversample, and use the `16 bit Divider 0 clk` clock
 
 
+## Compile-time configurations
+
+This application's functionality can be customized by setting variables in *Makefile* or by configuring them through `make` CLI arguments.
+
+- Run the `make build` command or build the project in your IDE to compile the application and generate a USB bootloader-compatible binary. This binary can be programmed onto the EZ-USB&trade; FX2G3 device using the EZ-USB&trade; FX Control Center application
+
+- Run the `make build CORE=CM0P` command or set the variable in *Makefile* to compile and generate the binary for the Cortex&reg; M0+ core. By default, `CORE` is set as `CM4` and the binary is compiled and generated for the Cortex&reg; M4 core
+
+- Choose between the **Arm&reg; Compiler** or the **GNU Arm&reg; Embedded Compiler** build toolchains by setting the `TOOLCHAIN` variable in *Makefile* to `ARM` or `GCC_ARM` respectively. If you set it to `ARM`, ensure to set `CY_ARM_COMPILER_DIR` as a make variable or environment variable, pointing to the path of the compiler's root directory
+
+- Run the `make build REV02=no` command or set the variable in *Makefile* to compile the application and generate the binary compatible with the REV01 version of the EZ-USB&trade; FX2G3 kit
+> **Note:** If REV02 Kit is used, FPGA is configured using SMIF in x4 or Quad mode else (for REV01) FPGA is configured using SMIF in x1 or Single mode.
+
+By default, the application is configured to receive data from a 16-bit wide LVCMOS interface in SDR mode and make a USBHS data connection. Additional settings can be configured through macros specified by the `DEFINES` variable in *Makefile*:
+
+**Table 1. Macro description**
+
+Macro name        |  Description                          | Allowed values
+:--------         | :-------------                        | :------------
+BUS_WIDTH_16      | Select the LVCMOS bus width           | 1u for 16-bit <br> 0u for 8-bit bus width
+INTERLEAVE_EN     | Enable GPIF thread interleaving       | 1u to enable GPIF thread interleaving <br> 0u to select single thread
+DEVICE1_EN        | Enable Data Path#2                    | 1u to enable Data Path#2 <br> 0u to disable
+USBFS_LOGS_ENABLE | Enable debug logs through the USBFS port  | 1u for debug logs over USBFS <br> 0u for debug logs over UART (SCB4)
+<br>
+
+
 ## Operation
 
-**Note:** This code example currently supports Windows hosts. Support for Linux and macOS will be added in upcoming releases.
+> **Note:** This code example currently supports Windows hosts. Support for Linux and macOS will be added in upcoming releases.
 
 1. Connect the board (J2) to your PC using the provided USB cable
 2. Connect the USBFS port (J7) on the board to PC for debug logs
 
 3. Open a terminal program and select the Serial COM port. Set the serial port parameters to 8N1 and 921600 baud
 
-4. Perform the following steps to program the board using the [**EZ-USB&trade; FX Control Center**](https://softwaretools.infineon.com/tools/com.ifx.tb.tool.ezusbfxcontrolcenter) (Alpha) application
+4. Perform the following steps to program the board using the [**EZ-USB&trade; FX Control Center**](https://softwaretools.infineon.com/tools/com.ifx.tb.tool.ezusbfxcontrolcenter) application
 
    1. Perform the following steps to enter into the **Bootloader** mode:
 
@@ -208,7 +234,7 @@ c. Launch the Device Configurator tool to disable `SCB4`, and enable `SCB0` for 
       b. Press and release the **RESET** switch<br>
       c. Release the **PMODE** switch<br>
 
-   2. Open **EZ-USB&trade; FX Control Center** application
+   2. Open **EZ-USB&trade; FX Control Center** application  
    The **EZ-USB&trade; FX2G3** device displays as **EZ-USB&trade; FX Bootloader**
 
    3. Navigate to **Program** > **Internal Flash**
@@ -270,7 +296,7 @@ To enable debug logs on UART, set **USBFS_LOGS_ENABLE** compiler flag to '0u' in
 
 The verbosity of the debug log output can be modified by setting the **DEBUG_LEVEL** macro in *main.c* file with the following values for debugging:
 
-**Table 1. Debug values**
+**Table 2. Debug values**
 
 Macro value  | Description
 :--------    | :-------------
@@ -278,6 +304,7 @@ Macro value  | Description
 2u           | Enable error and warning messages
 3u           | Enable info messages as well
 4u           | Enable all message types
+
 <br>
 
 
@@ -314,8 +341,8 @@ This code example demonstrates the implementation of a Synchronous Slave FIFO in
    - **Data Path#1:** Data is received on LVCMOS Socket 0 (mapped to GPIF thread 0) and sent on EP 1-IN
    - **Data Path#2:** Data is received on LVCMOS socket 1 (mapped to GPIF thread 1) and sent on EP 2-IN
 
-   > **Note:** When thread interleaving is enabled, the device receives the data through LVCMOS Socket 0 (mapped to GPIF thread 0) and LVCMOS Socket 1 (mapped to GPIF thread 1) in a ping pong manner and send it on EP 1-IN.
-- Four DMA buffers of 61440 (60KB) bytes size are used to hold the data while it is being forwarded to the USB
+      > **Note:** When thread interleaving is enabled, the device receives the data through LVCMOS Socket 0 (mapped to GPIF thread 0) and LVCMOS Socket 1 (mapped to GPIF thread 1) in a ping pong manner and send it on EP 1-IN.
+- Three DMA buffers of 61440 (60KB) bytes each are used to hold the data while it is being forwarded to the USB
 
 
 ### Application workflow
@@ -350,6 +377,7 @@ During initialization, the following steps are performed:
 1. During USB device enumeration, the host requests for descriptors that are already registered with the USBD layer during the initialization phase
 2. The host sends the `SET_CONFIGURATION` and `SET_INTERFACE` commands to activate the required function in the device
 3. After the `SET_CONFIGURATION` and `SET_INTERFACE` commands, the application task takes control and enables the endpoints for data transfer
+4. The `SET_CONFIGURATION` handler creates a composite DMA channel which uses the sockets in the LVCMOS block to receive data into buffer RAM and DataWire channels to send the data to the USB host through the IN endpoint
 
 
 #### Slave FIFO IN transfer
@@ -359,13 +387,14 @@ During initialization, the following steps are performed:
 - The DMA ready flag on the SIP interface is asserted
 - The FPGA data source starts streaming data to the EZ-USB&trade; FX2G3 device
 - Data moves from the LVCMOS subsystem to the SRAM through high-bandwidth DMA
-- The data is forwarded to the USBHS EP 1-IN or EP 2-IN. DataWire DMA channels are used in the case of USBHS transfers
+- Once a RAM buffer is filled with the received data, the `Cy_Slff_AppHbDmaRxCallback()` callback function is called
+- The callback function forwards the data to the USBHS EP 1-IN or EP 2-IN using DataWire DMA
 - Data moves from USB device Bulk endpoint-IN to the host application
 
 #### Slave FIFO interface
 The Synchronous Slave FIFO interface connections are as follows:
 
-**Table 2. Control signal usage in LVCMOS Slave FIFO state machine**
+**Table 3. Control signal usage in LVCMOS Slave FIFO state machine**
 
 FX2G3 pin         | Function            | Description
 :-------------    | :------------       | :--------------
@@ -377,8 +406,8 @@ P0CTL4            | PKTEND#             | Active LOW Packet End signal. Should b
 P0CTL5            | FlagA               | Active LOW DMA ready indication for currently addressed/active thread
 P0D8              | A0                  | LS bit of 2-bit address bus used to select thread (applicable for 8-bit LVCMOS bus width)
 P0D9              | A1                  | MS bit of 2-bit address bus used to select thread (applicable for 8-bit LVCMOS bus width)
-P1CTL9            | A0                  | LS bit of 2-bit address bus used to select thread (applicable for 16-bit LVCMOS bus width)
-P1CTL8            | A1                  | MS bit of 2-bit address bus used to select thread (applicable for 16-bit LVCMOS bus width)
+P0CTL9            | A0                  | LS bit of 2-bit address bus used to select thread (applicable for 16-bit LVCMOS bus width)
+P0CTL8            | A1                  | MS bit of 2-bit address bus used to select thread (applicable for 16-bit LVCMOS bus width)
 
 
 **Figure 2. Control signal usage in LVCMOS receiver state machine**
@@ -386,32 +415,6 @@ P1CTL8            | A1                  | MS bit of 2-bit address bus used to se
 ![](images/fx2g3-slave-fifo.png)
 
 > **Note:** Slave FIFO signals - SLCS#, SLWR#, PKTEND#, FlasgA, A0, and A1 are applications for this code examples.
-
-## Compile-time configurations
-
-This application's functionality can be customized by setting variables in *Makefile* or by configuring them through `make` CLI arguments.
-
-- Run the `make build` command or build the project in your IDE to compile the application and generate a USB bootloader-compatible binary. This binary can be programmed onto the EZ-USB&trade; FX2G3 device using the EZ-USB&trade; FX Control Center application
-
-- Run the `make build CORE=CM0P` command or set the variable in *Makefile* to compile and generate the binary for the Cortex&reg; M0+ core. By default, `CORE` is set as `CM4` and the binary is compiled and generated for the Cortex&reg; M4 core
-
-- Choose between the **Arm&reg; Compiler** or the **GNU Arm&reg; Embedded Compiler** build toolchains by setting the `TOOLCHAIN` variable in *Makefile* to `ARM` or `GCC_ARM` respectively. If you set it to `ARM`, ensure to set `CY_ARM_COMPILER_DIR` as a make variable or environment variable, pointing to the path of the compiler's root directory
-
-- Run the `make build REV02=no` command or set the variable in *Makefile* to compile the application and generate the binary compatible with the REV01 version of the EZ-USB&trade; FX2G3 kit
-> **Note:** If REV02 Kit is used, FPGA is configured using SMIF in x4 or Quad mode else (for REV01) FPGA is configured using SMIF in x1 or Single mode.
-
-By default, the application is configured to receive data from a 16-bit wide LVCMOS interface in SDR mode and make a USBHS data connection. Additional settings can be configured through macros specified by the `DEFINES` variable in *Makefile*:
-
-**Table 2. Macro description**
-
-Macro name        |  Description                          | Allowed values
-:--------         | :-------------                        | :------------
-BUS_WIDTH_16      | Select the LVCMOS bus width           | 1u for 16-bit <br> 0u for 8-bit bus width
-INTERLEAVE_EN     | Enable GPIF thread interleaving       | 1u to enable GPIF thread interleaving <br> 0u to select single thread
-DEVICE1_EN        | Enable Data Path#2                    | 1u to enable Data Path#2 <br> 0u to disable
-USBFS_LOGS_ENABLE | Enable debug logs through the USBFS port  | 1u for debug logs over USBFS <br> 0u for debug logs over UART (SCB4)
-
-<br>
 
 
 ## Limitations
@@ -428,14 +431,15 @@ Perform the following steps to program the binary file to the external flash.
 2. Navigate to **Program** > **External Flash** and browse the *FPGA binary* file
 3. Check the programming status
 
-**Table 3. BitFile description**
+**Table 4. BitFile description**
 
 BitFile                                         |    Description   
 :--------------------                           | :----------------                
-*FX2G3_Design_PassiveX1_16Bit_LVCMOS_RX.bin*    | LVCMOS RX 16-bit for REV01 kit        
-*FX2G3_Design_PassiveX1_8Bit_LVCMOS_RX.bin*     | LVCMOS RX 8-bit for REV01 kit
 *FX2G3_Design_PassiveX4_16Bit_LVCMOS_RX.bin*    | LVCMOS RX 16-bit for REV02 kit (default)          
 *FX2G3_Design_PassiveX4_8Bit_LVCMOS_RX.bin*     | LVCMOS RX 8-bit for REV02 kit
+*FX2G3_Design_PassiveX1_16Bit_LVCMOS_RX.bin*    | LVCMOS RX 16-bit for REV01 kit
+*FX2G3_Design_PassiveX1_8Bit_LVCMOS_RX.bin*     | LVCMOS RX 8-bit for REV01 kit
+
 <br>
 
 ## FPGA configuration
@@ -446,7 +450,7 @@ Steps to configure FPGA (in Passive serialx4 mode)
 - EZ-USB&trade; FPGA listens to the data on the SMIF lines and configures itself
 - EZ-USB&trade; FPGA asserts CDONE# when configuration is complete
 
-**Table 4. GPIOs for configuring FPGA on KIT_FX2G3_104LGA DVK**
+**Table 5. GPIOs for configuring FPGA on KIT_FX2G3_104LGA DVK**
 FX2G3 Pin        | Function            | Description
 :-------------   | :------------       | :--------------
 GPIO5            | CDONE#              | Active HIGH signal. FPGA asserts when FPGA configuration is completed
@@ -457,7 +461,7 @@ GPIO7            | PROG#               | Active LOW FPGA program signal
 
 ## Application files
 
-**Table 4. Application file description**
+**Table 6. Application file description**
 
 File                                | Description   
 :-------------                      | :------------                         
@@ -472,6 +476,7 @@ File                                | Description
 *usb_qspi.h*                        | Header file with SMIF application constants and the function definitions
 *cm0_code.c*                        | CM0 initialization code
 *Makefile*                          | GNU make compliant build script for compiling this example
+
 <br>
 
 
@@ -479,13 +484,14 @@ File                                | Description
 
 Resources  | Links
 -----------|----------------------------------
-User guide | [EZ-USB&trade; FX2G3 SDK user guide](./docs/EZ-USB-FX2G3-SDK-User-Guide.pdf)
+User guide | [EZ-USB&trade; FX2G3 SDK user guide](https://www.infineon.com/assets/row/public/documents/24/44/infineon-ez-usb-fx2g3-sdk-user-guide-usermanual-en.pdf)
 Code examples  | [Using ModusToolbox&trade;](https://github.com/Infineon/Code-Examples-for-ModusToolbox-Software) on GitHub
 Device documentation | [EZ-USB&trade; FX2G3 datasheets](https://www.infineon.com/cms/en/product/promopages/ez-usb-fx2g3/#!?fileId=8ac78c8c90530b3a01909c03f29537e0)
-Development kits | Select your kits from the [Evaluation board finder](https://www.infineon.com/cms/en/design-support/finder-selection-tools/product-finder/evaluation-board).
+Development kits | Select your kits from the [Evaluation board finder](https://www.infineon.com/cms/en/design-support/finder-selection-tools/product-finder/evaluation-board)
 Libraries on GitHub | [mtb-pdl-cat1](https://github.com/Infineon/mtb-pdl-cat1) – Peripheral Driver Library (PDL) and documents
 Middleware on GitHub  | [usbfxstack](https://github.com/Infineon/usbfxstack) – USBFXStack middleware library and documents
 Tools  | [ModusToolbox&trade;](https://www.infineon.com/modustoolbox) – ModusToolbox&trade; software is a collection of easy-to-use libraries and tools enabling rapid development with Infineon MCUs for applications ranging from wireless and cloud-connected systems, edge AI/ML, embedded sense and control, to wired USB connectivity using PSOC&trade; Industrial/IoT MCUs, AIROC&trade; Wi-Fi and Bluetooth&reg; connectivity devices, XMC&trade; Industrial MCUs, and EZ-USB&trade;/EZ-PD&trade; wired connectivity controllers. ModusToolbox&trade; incorporates a comprehensive set of BSPs, HAL, libraries, configuration tools, and provides support for industry-standard IDEs to fast-track your embedded application development
+
 <br>
 
 ### Compatibility information:
@@ -508,7 +514,9 @@ Document title: *CE240686* – *EZ-USB&trade; FX2G3: LVCMOS Slave FIFO IN applic
  1.0.0   | New code example
  1.0.1   | Updated for REV02 Kit
  1.0.2   | Updated for CM0+ and enable CLKOUT
- 1.0.3   | Updated to use the example with other products
+ 1.0.3   | Updated to use the example with all FX2G3 device variants
+ 1.0.4   | Updated data handlers to use new DMA APIs from USBFXStack
+
 <br>
 
 
@@ -517,11 +525,11 @@ All referenced product or service names and trademarks are the property of their
 
 The Bluetooth&reg; word mark and logos are registered trademarks owned by Bluetooth SIG, Inc., and any use of such marks by Infineon is under license.
 
+PSOC&trade;, formerly known as PSoC&trade;, is a trademark of Infineon Technologies. Any references to PSoC&trade; in this document or others shall be deemed to refer to PSOC&trade;.
 
 ---------------------------------------------------------
 
-© Cypress Semiconductor Corporation, 2025. This document is the property of Cypress Semiconductor Corporation, an Infineon Technologies company, and its affiliates ("Cypress").  This document, including any software or firmware included or referenced in this document ("Software"), is owned by Cypress under the intellectual property laws and treaties of the United States and other countries worldwide.  Cypress reserves all rights under such laws and treaties and does not, except as specifically stated in this paragraph, grant any license under its patents, copyrights, trademarks, or other intellectual property rights.  If the Software is not accompanied by a license agreement and you do not otherwise have a written agreement with Cypress governing the use of the Software, then Cypress hereby grants you a personal, non-exclusive, nontransferable license (without the right to sublicense) (1) under its copyright rights in the Software (a) for Software provided in source code form, to modify and reproduce the Software solely for use with Cypress hardware products, only internally within your organization, and (b) to distribute the Software in binary code form externally to end users (either directly or indirectly through resellers and distributors), solely for use on Cypress hardware product units, and (2) under those claims of Cypress's patents that are infringed by the Software (as provided by Cypress, unmodified) to make, use, distribute, and import the Software solely for use with Cypress hardware products.  Any other use, reproduction, modification, translation, or compilation of the Software is prohibited.
+(c) 2026, Infineon Technologies AG, or an affiliate of Infineon Technologies AG. All rights reserved.
+This software, associated documentation and materials ("Software") is owned by Infineon Technologies AG or one of its affiliates ("Infineon") and is protected by and subject to worldwide patent protection, worldwide copyright laws, and international treaty provisions. Therefore, you may use this Software only as provided in the license agreement accompanying the software package from which you obtained this Software. If no license agreement applies, then any use, reproduction, modification, translation, or compilation of this Software is prohibited without the express written permission of Infineon.
 <br>
-TO THE EXTENT PERMITTED BY APPLICABLE LAW, CYPRESS MAKES NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, WITH REGARD TO THIS DOCUMENT OR ANY SOFTWARE OR ACCOMPANYING HARDWARE, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  No computing device can be absolutely secure.  Therefore, despite security measures implemented in Cypress hardware or software products, Cypress shall have no liability arising out of any security breach, such as unauthorized access to or use of a Cypress product. CYPRESS DOES NOT REPRESENT, WARRANT, OR GUARANTEE THAT CYPRESS PRODUCTS, OR SYSTEMS CREATED USING CYPRESS PRODUCTS, WILL BE FREE FROM CORRUPTION, ATTACK, VIRUSES, INTERFERENCE, HACKING, DATA LOSS OR THEFT, OR OTHER SECURITY INTRUSION (collectively, "Security Breach").  Cypress disclaims any liability relating to any Security Breach, and you shall and hereby do release Cypress from any claim, damage, or other liability arising from any Security Breach.  In addition, the products described in these materials may contain design defects or errors known as errata which may cause the product to deviate from published specifications. To the extent permitted by applicable law, Cypress reserves the right to make changes to this document without further notice. Cypress does not assume any liability arising out of the application or use of any product or circuit described in this document. Any information provided in this document, including any sample design information or programming code, is provided only for reference purposes.  It is the responsibility of the user of this document to properly design, program, and test the functionality and safety of any application made of this information and any resulting product.  "High-Risk Device" means any device or system whose failure could cause personal injury, death, or property damage.  Examples of High-Risk Devices are weapons, nuclear installations, surgical implants, and other medical devices.  "Critical Component" means any component of a High-Risk Device whose failure to perform can be reasonably expected to cause, directly or indirectly, the failure of the High-Risk Device, or to affect its safety or effectiveness.  Cypress is not liable, in whole or in part, and you shall and hereby do release Cypress from any claim, damage, or other liability arising from any use of a Cypress product as a Critical Component in a High-Risk Device. You shall indemnify and hold Cypress, including its affiliates, and its directors, officers, employees, agents, distributors, and assigns harmless from and against all claims, costs, damages, and expenses, arising out of any claim, including claims for product liability, personal injury or death, or property damage arising from any use of a Cypress product as a Critical Component in a High-Risk Device. Cypress products are not intended or authorized for use as a Critical Component in any High-Risk Device except to the limited extent that (i) Cypress's published data sheet for the product explicitly states Cypress has qualified the product for use in a specific High-Risk Device, or (ii) Cypress has given you advance written authorization to use the product as a Critical Component in the specific High-Risk Device and you have signed a separate indemnification agreement.
-<br>
-Cypress, the Cypress logo, and combinations thereof, ModusToolbox, PSoC, CAPSENSE, EZ-USB, F-RAM, and TRAVEO are trademarks or registered trademarks of Cypress or a subsidiary of Cypress in the United States or in other countries. For a more complete list of Cypress trademarks, visit www.infineon.com. Other names and brands may be claimed as property of their respective owners.
+Disclaimer: UNLESS OTHERWISE EXPRESSLY AGREED WITH INFINEON, THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, ALL WARRANTIES OF NON-INFRINGEMENT OF THIRD-PARTY RIGHTS AND IMPLIED WARRANTIES SUCH AS WARRANTIES OF FITNESS FOR A SPECIFIC USE/PURPOSE OR MERCHANTABILITY. Infineon reserves the right to make changes to the Software without notice. You are responsible for properly designing, programming, and testing the functionality and safety of your intended application of the Software, as well as complying with any legal requirements related to its use. Infineon does not guarantee that the Software will be free from intrusion, data theft or loss, or other breaches (“Security Breaches”), and Infineon shall have no liability arising out of any Security Breaches. Unless otherwise explicitly approved by Infineon, the Software may not be used in any application where a failure of the Product or any consequences of the use thereof can reasonably be expected to result in personal injury.

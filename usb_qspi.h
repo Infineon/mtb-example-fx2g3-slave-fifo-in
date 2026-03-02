@@ -1,12 +1,12 @@
 /***************************************************************************//**
-* \file qspi.h
+* \file usb_qspi.h
 * \version 1.0
 *
-* \brief Provided API declarations for the QSPI implementation. 
+* \brief Provided API declarations for the QSPI implementation.
 *
 *******************************************************************************
 * \copyright
-* (c) (2025), Cypress Semiconductor Corporation (an Infineon company) or
+* (c) (2026), Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.
 *
 * SPDX-License-Identifier: Apache-2.0
@@ -24,19 +24,17 @@
 * limitations under the License.
 ***************************************************************************/
 
-
-
-#ifndef _QSPI_H_
-#define _QSPI_H_
+#ifndef _USB_QSPI_H_
+#define _USB_QSPI_H_
 
 #include "cy_pdl.h"
 #include "usb_i2c.h"
 #include "cy_debug.h"
 #include "usb_app.h"
-#if defined(__cplusplus)
-}
-#endif
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 /* SMIF Enums */
 typedef enum cy_en_spiFlashType_t
@@ -72,7 +70,7 @@ typedef struct cy_stc_cfi_erase_block_info_t
 /* EZ-USB FX Control Center application appends a metadata section to any file it programs to the external flash.
  * This can be used by the application using the flash to find out details such as start address, size etc. about the programmed file */
 
-typedef struct 
+typedef struct
 {
     uint32_t startSignature;
     uint32_t fpgaFileStartAddress;
@@ -159,9 +157,6 @@ typedef struct
 #define T20_INIT_RESET_PORT                     (1)
 #define T20_INIT_RESET_PIN                      (cy_en_lvds_phy_gpio_index_t)(16+8)
 
-#define T20_PROGRAM_N_PORT                      (1)
-#define T20_PROGRAM_N_PIN                       (cy_en_lvds_phy_gpio_index_t)(9)
-
 #define T20_SSN_PORT                            (1)
 #define T20_SSN_PIN                             (cy_en_lvds_phy_gpio_index_t)(0)
 
@@ -190,7 +185,7 @@ typedef struct
 #define CY_APP_SPI_READ_ANY_REG_CMD             (0x65)
 #define CY_APP_SPI_WRITE_ANY_REGISTER_CMD       (0x71)
 #define CY_SPI_READ_CMD                         (0x03)
-#define CY_QSPI_NUM_DUMMY_CYCLES                (0x08) 
+#define CY_QSPI_NUM_DUMMY_CYCLES                (0x08)
 #define CY_FLASH_ID_LENGTH                      (0x08)
 #define CY_SPI_WRITE_ENABLE_LATCH_MASK          (0x02)
 
@@ -227,10 +222,9 @@ void Cy_QSPI_ConfigureSMIFPins(bool init);
  * \name Cy_QSPI_Start
  * \brief Function to start the QSPI/SMIF block
  * \param pAppCtxt application layer context pointer
- * \param hbw_bufmgr HBDMA buffer manager pointer
  * \retval status
  */
-void Cy_QSPI_Start(cy_stc_usb_app_ctxt_t *pUsbApp,cy_stc_hbdma_buf_mgr_t *hbw_bufmgr);
+void Cy_QSPI_Start(cy_stc_usb_app_ctxt_t *pUsbApp);
 
 /**
  * \name Cy_QSPI_ReadID
@@ -278,8 +272,17 @@ bool Cy_QSPI_IsMemBusy(cy_en_flash_index_t flashIndex);
  */
 cy_en_smif_status_t Cy_SPI_FlashInit (cy_en_flash_index_t flashIndex, bool quadEnable, bool qpiEnable);
 
+/**
+ * \name Cy_IsFPGAConfigured
+ * \brief Function to check if FPGA is already configured
+ * \retval bool
+ */
+bool Cy_IsFPGAConfigured(void);
+
 #if defined(__cplusplus)
 }
 #endif
 
-#endif /*_QSPI_H_*/
+#endif /* _USB_QSPI_H_ */
+
+/*[EOF]*/
